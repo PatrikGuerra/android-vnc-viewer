@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auto_title">Connect on open</string>
+    <string name="auto_enable">Connect automatically when opening the app</string>
+    <string name="auto_profile">Saved connection</string>
+    <string name="auto_interval">Seconds between attempts (1–3600)</string>
+    <string name="auto_save">Save</string>
+    <string name="auto_no_profiles">Save a connection with a valid address and port first.</string>
+    <string name="auto_settings_help">Changes apply next time you open the app. Network failures and dropped sessions are retried. Cancel stops attempts until the next opening. Passwords use the existing saved profile.</string>
+    <string name="auto_invalid_interval">Enter a whole number from 1 to 3600.</string>
+    <string name="auto_cancel">Cancel</string>
+    <string name="auto_stopped">Automatic connection stopped for this opening.</string>
+    <string name="auto_waiting">%1$s\n%2$s\nNext attempt in %3$d seconds.</string>
+    <string name="auto_connecting">Connecting to %1$s…</string>
+    <string name="auto_first_frame">Waiting for the first image…</string>
+    <string name="auto_retry_error">Network connection failed or was lost.</string>
+    <string name="auto_terminal_error">Automatic connection stopped. Check the saved profile, authentication and server compatibility.</string>
+    <string name="auto_memory_error">Automatic connection stopped: low memory.</string>
+    <string name="auto_stop_reconnect">Stop automatic reconnection</string>
+    <string name="auto_worker_busy">Waiting for the previous connection attempt to finish.</string>
+</resources>

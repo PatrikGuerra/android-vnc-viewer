@@ -39,6 +39,7 @@ import android.database.Cursor;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -514,6 +515,44 @@ public class VncCanvasActivity extends Activity {
 
 	ZoomControls zoomer;
 	Panner panner;
+	private long automaticToken;
+	private boolean automaticRetry = true;
+	private ResultReceiver automaticEvents;
+
+	boolean isAutomaticConnection() { return automaticToken > 0; }
+
+	void autoConnectionEstablished() {
+		if (isFinishing() || !automaticRetry) return;
+		if (automaticEvents != null) automaticEvents.send(AutoConnectContract.CONNECTED, new Bundle());
+	}
+
+	void cancelAutomaticAttempt() {
+		if (!isAutomaticConnection() || isFinishing()) return;
+		automaticRetry = false;
+		if (automaticEvents != null) automaticEvents.send(AutoConnectContract.CANCELLED, new Bundle());
+		setResult(AutoConnectContract.CANCELLED, new Intent().putExtra(AutoConnectContract.TOKEN, automaticToken));
+		if (vncCanvas != null) vncCanvas.closeConnection();
+		finish();
+	}
+
+	void autoConnectionFailed(Throwable error) {
+		if (!isAutomaticConnection() || isFinishing()) return;
+		if (!automaticRetry) { cancelAutomaticAttempt(); return; }
+		boolean retry = AutoConnectContract.isRetryable(error);
+		int text = error instanceof OutOfMemoryError ? R.string.auto_memory_error
+				: retry ? R.string.auto_retry_error : R.string.auto_terminal_error;
+		setResult(retry ? AutoConnectContract.RETRY : AutoConnectContract.TERMINAL,
+				new Intent().putExtra(AutoConnectContract.TOKEN, automaticToken)
+				.putExtra(AutoConnectContract.ERROR, getString(text)));
+		if (vncCanvas != null) vncCanvas.closeConnection();
+		finish();
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle out) {
+		super.onSaveInstanceState(out);
+		out.putBoolean("automatic_retry", automaticRetry);
+	}
 
 	@Override
 	public void onCreate(Bundle icicle) {
@@ -527,6 +566,12 @@ public class VncCanvasActivity extends Activity {
 		database = new VncDatabase(this);
 
 		Intent i = getIntent();
+		automaticToken = i.getLongExtra(AutoConnectContract.TOKEN, 0);
+		automaticEvents = (ResultReceiver)i.getParcelableExtra(AutoConnectContract.EVENTS);
+		if (icicle != null) automaticRetry = icicle.getBoolean("automatic_retry", true);
+		if (isAutomaticConnection()) {
+			setResult(AutoConnectContract.CANCELLED, new Intent().putExtra(AutoConnectContract.TOKEN, automaticToken));
+		}
 		connection = new ConnectionBean();
 		Uri data = i.getData();
 		if ((data != null) && (data.getScheme().equals("vnc"))) {
@@ -606,7 +651,7 @@ public class VncCanvasActivity extends Activity {
 
 		vncCanvas.initializeVncCanvas(connection, new Runnable() {
 			public void run() {
-				setModes();
+				if (!isFinishing() && vncCanvas.connectionActive()) setModes();
 			}
 		});
 		zoomer.hide();
@@ -754,6 +799,7 @@ public class VncCanvasActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.vnccanvasactivitymenu, menu);
+		menu.findItem(R.id.itemStopAutoConnect).setVisible(isAutomaticConnection() && automaticRetry);
 
 		if (vncCanvas.scaling != null)
 			menu.findItem(vncCanvas.scaling.getId()).setChecked(true);
@@ -856,6 +902,12 @@ public class VncCanvasActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		vncCanvas.afterMenu = true;
 		switch (item.getItemId()) {
+		case R.id.itemStopAutoConnect:
+			automaticRetry = false;
+			if (automaticEvents != null) automaticEvents.send(AutoConnectContract.CANCELLED, new Bundle());
+			item.setVisible(false);
+			Toast.makeText(this, R.string.auto_stopped, Toast.LENGTH_SHORT).show();
+			return true;
 		case R.id.itemRotate90:
 			ScreenOrientation.rotate90(this);
 			return true;
@@ -888,6 +940,7 @@ public class VncCanvasActivity extends Activity {
 							/ 2);
 			return true;
 		case R.id.itemDisconnect:
+			if (isAutomaticConnection()) { cancelAutomaticAttempt(); return true; }
 			vncCanvas.closeConnection();
 			finish();
 			return true;
@@ -982,15 +1035,15 @@ public class VncCanvasActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if (isFinishing()) {
-			vncCanvas.closeConnection();
-			vncCanvas.onDestroy();
-			database.close();
-		}
+		// Ordinary screen rotation is handled in-place. Any actual destruction
+		// must release the old worker, including an unhandled configuration change.
+		if (vncCanvas != null) vncCanvas.onDestroy();
+		if (database != null) database.close();
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent evt) {
+		if (isAutomaticConnection() && keyCode == KeyEvent.KEYCODE_BACK) return true;
 		if (keyCode == KeyEvent.KEYCODE_MENU)
 			return super.onKeyDown(keyCode, evt);
 
@@ -999,6 +1052,7 @@ public class VncCanvasActivity extends Activity {
 
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent evt) {
+		if (isAutomaticConnection() && keyCode == KeyEvent.KEYCODE_BACK) { cancelAutomaticAttempt(); return true; }
 		if (keyCode == KeyEvent.KEYCODE_MENU)
 			return super.onKeyUp(keyCode, evt);
 

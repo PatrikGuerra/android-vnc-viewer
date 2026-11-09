@@ -24,10 +24,27 @@ As releases deste fork preservam pacote e certificado, permitindo atualizações
 | Rotação com sessão ativa | Ajusta a visualização sem recriar a atividade ou reconectar ao servidor. |
 | **Preencher tela toda (sem bordas)** | Estica a imagem para ocupar a área disponível; pode alterar suas proporções. |
 | Ajustes de toque e desenho | Converte as coordenadas conforme a escala e recalcula o desenho após mudar o tamanho da tela. |
+| **Conectar ao abrir** | Usa um perfil salvo, repete falhas e quedas no intervalo escolhido e permite cancelar até a próxima abertura. |
 
 **Girar 90°** e **Orientação da tela** aparecem no menu da configuração e da sessão. Abra-o pelo botão Menu do aparelho ou pelo menu da interface. Na sessão, a escala fica em **Scaling**.
 
 Continuam disponíveis os modos originais **Fit to Screen** (mantém proporções), **1:1** e **Zoomable**. Perfis de conexão, escolha de cores, modos de entrada, teclas especiais e importação/exportação também vêm do projeto original; não foram introduzidos neste fork.
+
+## Conectar ao abrir
+
+No menu principal, abra **Conectar ao abrir**, ative o recurso, escolha uma conexão salva e defina o intervalo. O padrão é **10 segundos**; são aceitos inteiros entre 1 e 3.600. A ativação e as alterações valem na próxima abertura explícita. O recurso vem desligado e usa as credenciais já salvas no perfil, sem duplicar senhas.
+
+A primeira tentativa é imediata. Falhas de rede e quedas posteriores aguardam o intervalo completo antes de tentar novamente, com uma única tentativa por vez. A tela mostra o último erro e a contagem regressiva. Não é necessário confirmar uma janela a cada falha.
+
+- **Cancelar**, durante a espera ou conexão, interrompe a automação nesta abertura. A configuração continua salva e volta a funcionar na próxima abertura explícita; retornar da sessão ou girar a tela não reinicia o ciclo.
+- Na sessão conectada, **Parar reconexão automática** mantém a conexão atual e impede novas tentativas após uma queda. **Disconnect** ou Voltar encerram a sessão automática e seu ciclo.
+- Abrir as configurações de conexão automática também interrompe o ciclo atual para permitir edição. Desligar o recurso interrompe a automação imediatamente.
+- Novas tentativas ficam suspensas em segundo plano e retomam ao voltar, salvo se foram canceladas. Não há serviço permanente de tentativas em segundo plano.
+- Autenticação rejeitada, configuração inválida e falta de memória interrompem o ciclo com uma mensagem. Perfil excluído desativa sua configuração automática.
+
+O transporte usa timeout de 10 segundos na conexão TCP e de 10 segundos de inatividade durante negociação/primeiro quadro; após receber imagem, o timeout de inicialização é retirado para permitir telas estáticas. Quedas posteriores são detectadas pelo transporte TCP. A resolução de nomes depende do sistema: cancelar devolve o controle da interface, descarta resultados atrasados e impede acúmulo de workers, mesmo se o DNS demorar a terminar.
+
+A abertura automática por um script externo do tablet também pode acionar esse recurso. O APK continua sem instalar ou modificar scripts de inicialização.
 
 ## Correções de estabilidade
 
@@ -99,6 +116,8 @@ O teste Java de rotação também roda no CI e cobre painéis cuja posição nat
 ## Validação e limitações
 
 No NT-1710/Android 4.2.2 foram verificados abertura, menu, orientação vertical, giro durante sessão sem reconexão, imagem RAW de um servidor de teste local, preenchimento e coordenadas de toque. Isso não comprova compatibilidade com todos os servidores, autenticações ou versões antigas do Android. O modo proporcional ainda requer conferência visual final no aparelho.
+
+O controlador de conexão automática tem testes automatizados de seleção, intervalo, reconexão, cancelamento e resultados atrasados. O ciclo completo de Conectar ao abrir ainda precisa de validação no aparelho; esses testes não são apresentados como teste físico no NT-1710.
 
 A resolução física e o hardware limitam nitidez e desempenho. O preenchimento pode deformar a imagem. Girar o cliente não muda automaticamente a orientação ou resolução do computador remoto. Prefira uma rede local confiável ou acesso por rede privada para esse cliente legado.
 

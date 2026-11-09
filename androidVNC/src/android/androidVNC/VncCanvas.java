@@ -30,6 +30,8 @@
 package android.androidVNC;
 
 import java.io.IOException;
+import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.Inflater;
 
 import android.app.ProgressDialog;
@@ -66,7 +68,14 @@ public class VncCanvas extends ImageView {
 	ConnectionBean connection;
 
 	// Runtime control flags
-	private boolean maintainConnection = true;
+	private volatile boolean maintainConnection = true;
+	private final ConnectionTransport transport = new ConnectionTransport();
+	private volatile boolean workerRunning, disposeRequested;
+	private static final AtomicBoolean autoWorker = new AtomicBoolean();
+	private boolean firstFrameReceived;
+	private ProgressDialog startupDialog;
+	static boolean automaticWorkerBusy() { return autoWorker.get(); }
+	boolean connectionActive() { return maintainConnection; }
 	private boolean showDesktopInfo = true;
 	private boolean repaintsEnabled = true;
 	
@@ -146,6 +155,17 @@ public class VncCanvas extends ImageView {
 	 */
 	void initializeVncCanvas(ConnectionBean bean, final Runnable setModes) {
 		connection = bean;
+		final VncCanvasActivity activity = (VncCanvasActivity)getContext();
+		final boolean automatic = activity.isAutomaticConnection();
+		try { this.pendingColorModel = COLORMODEL.valueOf(bean.getColorModel()); }
+		catch (IllegalArgumentException error) {
+			if (automatic) { activity.autoConnectionFailed(error); return; }
+			throw error;
+		}
+		if (automatic && !autoWorker.compareAndSet(false, true)) {
+			activity.autoConnectionFailed(new IOException(getContext().getString(R.string.auto_worker_busy)));
+			return;
+		}
 		if (connection.getUseWakeLock())
 		{
 			if (wakeLock != null && wakeLock.isHeld()) {
@@ -153,13 +173,20 @@ public class VncCanvas extends ImageView {
 			}
 			wakeLock = ((PowerManager)getContext().getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "android.androidVNC");
 		}
-		this.pendingColorModel = COLORMODEL.valueOf(bean.getColorModel());
 
 		// Startup the RFB thread with a nifty progess dialog
-		final ProgressDialog pd = ProgressDialog.show(getContext(), "Connecting...", "Establishing handshake.\nPlease wait...", true, true, new DialogInterface.OnCancelListener() {
+		final ProgressDialog pd = new ProgressDialog(getContext());
+		startupDialog = pd;
+		pd.setTitle(automatic ? getContext().getString(R.string.auto_title) : "Connecting...");
+		pd.setMessage(automatic ? getContext().getString(R.string.auto_connecting, AutoConnectSettings.label(bean))
+				: "Establishing handshake.\nPlease wait...");
+		pd.setIndeterminate(true);
+		pd.setCancelable(true);
+		pd.setOnCancelListener(new DialogInterface.OnCancelListener() {
 			@Override
 			public void onCancel(DialogInterface dialog) {
 				closeConnection();
+				if (automatic) { activity.cancelAutomaticAttempt(); return; }
 				handler.post(new Runnable() {
 					public void run() {
 						Utils.showErrorMessage(getContext(), "VNC connection aborted!");
@@ -167,16 +194,22 @@ public class VncCanvas extends ImageView {
 				});
 			}
 		});
+		pd.setButton(DialogInterface.BUTTON_NEGATIVE, getContext().getString(R.string.auto_cancel), new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) { pd.cancel(); }
+		});
+		pd.show();
 		final Display display = pd.getWindow().getWindowManager().getDefaultDisplay();
 		final int maxDim = Math.max(display.getWidth(), display.getHeight());
-		Thread t = new Thread() {
+		workerRunning = true;
+		Thread t = new Thread("VNC connection") {
 			public void run() {
 				try {
 					connectAndAuthenticate(connection.getUserName(),connection.getPassword());
 					doProtocolInitialisation(maxDim, maxDim);
 					handler.post(new Runnable() {
 						public void run() {
-							pd.setMessage("Downloading first frame.\nPlease wait...");
+							if (pd.isShowing() && maintainConnection) pd.setMessage(automatic
+									? getContext().getString(R.string.auto_first_frame) : "Downloading first frame.\nPlease wait...");
 						}
 					});
 					processNormalProtocol(getContext(), pd, setModes);
@@ -186,9 +219,15 @@ public class VncCanvas extends ImageView {
 						e.printStackTrace();
 						// Ensure we dismiss the progress dialog
 						// before we fatal error finish
-						if (pd.isShowing())
-							pd.dismiss();
-						if (e instanceof OutOfMemoryError) {
+						final Throwable failure = e;
+						if (automatic) {
+							handler.post(new Runnable() {
+								public void run() {
+									if (pd.isShowing()) pd.dismiss();
+									if (maintainConnection && !activity.isFinishing()) activity.autoConnectionFailed(failure);
+								}
+							});
+						} else if (e instanceof OutOfMemoryError) {
 							// TODO  Not sure if this will happen but...
 							// figure out how to gracefully notify the user
 							// Instantiating an alert dialog here doesn't work
@@ -201,11 +240,24 @@ public class VncCanvas extends ImageView {
 							final String error_ = error + "<br>" + e.getLocalizedMessage();
 							handler.post(new Runnable() {
 								public void run() {
+									if (pd.isShowing()) pd.dismiss();
+									if (!maintainConnection || activity.isFinishing()) return;
 									Utils.showFatalErrorMessage(getContext(), error_);
 								}
 							});
 						}
 					}
+				} finally {
+					closeTransport();
+					handler.post(new Runnable() {
+						public void run() { if (pd.isShowing()) pd.dismiss(); }
+					});
+					if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+					workerRunning = false;
+					if (automatic) autoWorker.set(false);
+					if (disposeRequested) handler.post(new Runnable() {
+						public void run() { disposeBitmap(); }
+					});
 				}
 			}
 		};
@@ -215,7 +267,10 @@ public class VncCanvas extends ImageView {
 	void connectAndAuthenticate(String us,String pw) throws Exception {
 		Log.i(TAG, "Connecting to " + connection.getAddress() + ", port " + connection.getPort() + "...");
 
-		rfb = new RfbProto(connection.getAddress(), connection.getPort());
+		boolean automatic = ((VncCanvasActivity)getContext()).isAutomaticConnection();
+		Socket socket = transport.connect(connection.getAddress(), connection.getPort(), automatic);
+		if (!maintainConnection) { socket.close(); throw new IOException("Cancelled"); }
+		rfb = new RfbProto(connection.getAddress(), connection.getPort(), socket);
 		if (LOCAL_LOGV) Log.v(TAG, "Connected to server");
 
 		// <RepeaterMagic>
@@ -417,6 +472,17 @@ public class VncCanvas extends ImageView {
 						rfb.stopTiming();
 
 						// Hide progress dialog
+						if (!firstFrameReceived && rw > 0 && rh > 0) {
+							firstFrameReceived = true;
+							if (((VncCanvasActivity)getContext()).isAutomaticConnection()) {
+								transport.established();
+								handler.post(new Runnable() {
+									public void run() {
+										if (maintainConnection) ((VncCanvasActivity)getContext()).autoConnectionEstablished();
+									}
+								});
+							}
+						}
 						if (pd.isShowing())
 							pd.dismiss();
 					}
@@ -527,6 +593,14 @@ public class VncCanvas extends ImageView {
 
 	public void onDestroy() {
 		Log.v(TAG, "Cleaning up resources");
+		disposeRequested = true;
+		closeConnection();
+		if (startupDialog != null && startupDialog.isShowing()) startupDialog.dismiss();
+		handler.removeCallbacks(reDraw);
+		if (!workerRunning) disposeBitmap();
+	}
+
+	private void disposeBitmap() {
 		if ( bitmapData!=null) bitmapData.dispose();
 		bitmapData = null;
 	}
@@ -1011,6 +1085,12 @@ public class VncCanvas extends ImageView {
 
 	public void closeConnection() {
 		maintainConnection = false;
+		closeTransport();
+	}
+
+	private void closeTransport() {
+		transport.close();
+		if (rfb != null) rfb.close();
 	}
 	
 	void sendMetaKey(MetaKeyBean meta)

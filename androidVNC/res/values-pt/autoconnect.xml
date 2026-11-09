@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auto_title">Conectar ao abrir</string>
+    <string name="auto_enable">Conectar automaticamente ao abrir o app</string>
+    <string name="auto_profile">Conexão salva</string>
+    <string name="auto_interval">Segundos entre tentativas (1–3600)</string>
+    <string name="auto_save">Salvar</string>
+    <string name="auto_no_profiles">Primeiro salve uma conexão com endereço e porta válidos.</string>
+    <string name="auto_settings_help">As alterações valem na próxima abertura. Falhas de rede e quedas de sessão geram novas tentativas. Cancelar interrompe até a próxima abertura. A senha é a do perfil salvo.</string>
+    <string name="auto_invalid_interval">Informe um número inteiro de 1 a 3600.</string>
+    <string name="auto_cancel">Cancelar</string>
+    <string name="auto_stopped">Conexão automática interrompida nesta abertura.</string>
+    <string name="auto_waiting">%1$s\n%2$s\nNova tentativa em %3$d segundos.</string>
+    <string name="auto_connecting">Conectando a %1$s…</string>
+    <string name="auto_first_frame">Aguardando a primeira imagem…</string>
+    <string name="auto_retry_error">A conexão de rede falhou ou foi perdida.</string>
+    <string name="auto_terminal_error">Conexão automática interrompida. Confira o perfil salvo, a autenticação e a compatibilidade do servidor.</string>
+    <string name="auto_memory_error">Conexão automática interrompida: pouca memória.</string>
+    <string name="auto_stop_reconnect">Parar reconexão automática</string>
+    <string name="auto_worker_busy">Aguardando a tentativa anterior terminar.</string>
+</resources>

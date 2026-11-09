@@ -28,6 +28,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.ResultReceiver;
+import android.os.SystemClock;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -61,6 +64,13 @@ public class androidVNC extends Activity {
 	private CheckBox checkboxUseImmersive;
 	private CheckBox checkboxWakeLock;
 	private boolean repeaterTextSet;
+	private final AutoConnectController auto = new AutoConnectController();
+	private final Handler autoHandler = new Handler();
+	private boolean autoHandled, foreground, destroyed;
+	private String autoMessage = "";
+	private final Runnable autoTick = new Runnable() {
+		public void run() { tickAutoConnect(); }
+	};
 
 	@Override
 	public void onCreate(Bundle icicle) {
@@ -134,9 +144,49 @@ public class androidVNC extends Activity {
 		});
 		
 		database = new VncDatabase(this);
+		findViewById(R.id.autoConnectCancel).setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) { cancelAutoConnect(); }
+		});
+		if (icicle != null) {
+			autoHandled = icicle.getBoolean("auto_handled", true);
+			auto.token = icicle.getLong("auto_token");
+			auto.due = icicle.getLong("auto_due");
+			auto.connectionId = icicle.getLong("auto_profile");
+			auto.intervalSeconds = icicle.getInt("auto_interval", 10);
+			autoMessage = icicle.getString("auto_message");
+			try { auto.state = AutoConnectController.State.valueOf(icicle.getString("auto_state")); }
+			catch (Exception error) { auto.cancel(); }
+		} else if ((getIntent().getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) {
+			autoHandled = true;
+		}
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle out) {
+		super.onSaveInstanceState(out);
+		out.putBoolean("auto_handled", autoHandled);
+		out.putString("auto_state", auto.state.name());
+		out.putLong("auto_token", auto.token);
+		out.putLong("auto_due", auto.due);
+		out.putLong("auto_profile", auto.connectionId);
+		out.putInt("auto_interval", auto.intervalSeconds);
+		out.putString("auto_message", autoMessage);
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		setIntent(intent);
+		if (Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
+				&& (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {
+			auto.cancel();
+			autoHandled = false;
+		}
 	}
 	
 	protected void onDestroy() {
+		destroyed = true;
+		autoHandler.removeCallbacks(autoTick);
 		database.close();
 		super.onDestroy();
 	}
@@ -196,6 +246,10 @@ public class androidVNC extends Activity {
 				public void onClick(DialogInterface dialog, int i)
 				{
 					selected.Gen_delete(database.getWritableDatabase());
+					if (selected.get_Id() == AutoConnectSettings.connectionId(androidVNC.this)) {
+						AutoConnectSettings.disable(androidVNC.this);
+						cancelAutoConnect();
+					}
 					arriveOnPage();
 				}
 			}, null);
@@ -208,6 +262,10 @@ public class androidVNC extends Activity {
 			break;
 		case R.id.itemScreenOrientation :
 			ScreenOrientation.showChooser(this);
+			break;
+		case R.id.itemAutoConnect:
+			if (auto.state != AutoConnectController.State.IDLE) cancelAutoConnect();
+			AutoConnectSettings.show(this);
 			break;
 		}
 		return true;
@@ -301,6 +359,106 @@ public class androidVNC extends Activity {
 	protected void onResume() {
 		super.onResume();
 		ScreenOrientation.apply(this);
+		foreground = true;
+		if (!autoHandled) {
+			autoHandled = true;
+			if (AutoConnectSettings.enabled(this)) {
+				autoMessage = "";
+				long id = AutoConnectSettings.connectionId(this);
+				if (id > 0) auto.begin(id, AutoConnectSettings.interval(this), SystemClock.elapsedRealtime());
+				else cancelAutoConnect();
+			}
+		}
+		autoHandler.removeCallbacks(autoTick);
+		autoHandler.post(autoTick);
+	}
+
+	@Override
+	protected void onPause() {
+		foreground = false;
+		autoHandler.removeCallbacks(autoTick);
+		super.onPause();
+	}
+
+	void cancelAutoConnect() {
+		auto.cancel();
+		autoMessage = getString(R.string.auto_stopped);
+		autoHandler.removeCallbacks(autoTick);
+		showAutoStatus();
+	}
+
+	private void showAutoStatus() {
+		boolean visible = auto.state != AutoConnectController.State.IDLE;
+		findViewById(R.id.autoConnectStatus).setVisibility(visible ? View.VISIBLE : View.GONE);
+		findViewById(R.id.autoConnectCancel).setVisibility(auto.state == AutoConnectController.State.CANCELLED ? View.GONE : View.VISIBLE);
+		String message = autoMessage == null ? "" : autoMessage;
+		if (auto.state == AutoConnectController.State.WAITING) {
+			message = getString(R.string.auto_waiting, autoProfileLabel(), message,
+					auto.secondsRemaining(SystemClock.elapsedRealtime()));
+		}
+		((TextView)findViewById(R.id.autoConnectMessage)).setText(message);
+	}
+
+	private ConnectionBean readAutoProfile() {
+		ConnectionBean profile = new ConnectionBean();
+		if (!profile.Gen_read(database.getReadableDatabase(), auto.connectionId) || !AutoConnectSettings.valid(profile)) return null;
+		return profile;
+	}
+
+	private String autoProfileLabel() {
+		ConnectionBean profile = readAutoProfile();
+		return profile == null ? getString(R.string.auto_profile) : AutoConnectSettings.label(profile);
+	}
+
+	private void tickAutoConnect() {
+		if (!foreground || destroyed) return;
+		if (auto.state == AutoConnectController.State.WAITING) {
+			if (!AutoConnectSettings.enabled(this)) { cancelAutoConnect(); return; }
+			ConnectionBean profile = readAutoProfile();
+			if (profile == null) {
+				AutoConnectSettings.disable(this);
+				auto.cancel();
+				autoMessage = getString(R.string.auto_no_profiles);
+			} else if (VncCanvas.automaticWorkerBusy()) {
+				autoMessage = getString(R.string.auto_worker_busy);
+			} else {
+				final long attempt = auto.tryStart(SystemClock.elapsedRealtime(), foreground);
+				if (attempt != 0) {
+					if (Utils.getMemoryInfo(this).lowMemory) {
+						auto.failed(attempt, false, SystemClock.elapsedRealtime());
+						autoMessage = getString(R.string.auto_memory_error);
+					} else {
+						Intent intent = new Intent(this, VncCanvasActivity.class);
+						intent.putExtra(VncConstants.CONNECTION, profile.Gen_getValues());
+						intent.putExtra(AutoConnectContract.TOKEN, attempt);
+						intent.putExtra(AutoConnectContract.EVENTS, new ResultReceiver(autoHandler) {
+							protected void onReceiveResult(int code, Bundle data) {
+								if (destroyed || auto.token != attempt) return;
+								if (code == AutoConnectContract.CONNECTED) auto.connected(attempt);
+								else if (code == AutoConnectContract.CANCELLED) cancelAutoConnect();
+							}
+						});
+						autoMessage = getString(R.string.auto_connecting, AutoConnectSettings.label(profile));
+						startActivityForResult(intent, AutoConnectContract.REQUEST);
+					}
+				}
+			}
+		}
+		showAutoStatus();
+		if (auto.state == AutoConnectController.State.WAITING) autoHandler.postDelayed(autoTick, 1000);
+	}
+
+	@Override
+	protected void onActivityResult(int request, int result, Intent data) {
+		super.onActivityResult(request, result, data);
+		if (request != AutoConnectContract.REQUEST || destroyed) return;
+		long token = data == null ? auto.token : data.getLongExtra(AutoConnectContract.TOKEN, -1);
+		if (token != auto.token) return;
+		if (result == AutoConnectContract.CANCELLED) cancelAutoConnect();
+		else {
+			auto.failed(token, result == AutoConnectContract.RETRY, SystemClock.elapsedRealtime());
+			autoMessage = data == null ? getString(R.string.auto_terminal_error) : data.getStringExtra(AutoConnectContract.ERROR);
+		}
 	}
 	
 	/**
@@ -345,7 +503,7 @@ public class androidVNC extends Activity {
 		spinnerConnection.setSelection(connectionIndex,false);
 		selected=connections.get(connectionIndex);
 		updateViewFromSelected();
-		IntroTextDialog.showIntroTextIfNecessary(this, database);
+		if (!AutoConnectSettings.enabled(this)) IntroTextDialog.showIntroTextIfNecessary(this, database);
 	}
 	
 	protected void onStop() {
@@ -363,6 +521,7 @@ public class androidVNC extends Activity {
 	}
 	
 	private void canvasStart() {
+		if (auto.state != AutoConnectController.State.IDLE) cancelAutoConnect();
 		if (selected == null) return;
 		MemoryInfo info = Utils.getMemoryInfo(this);
 		if (info.lowMemory) {

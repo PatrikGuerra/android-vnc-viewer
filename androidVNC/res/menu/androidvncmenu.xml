@@ -1,4 +1,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/itemAutoConnect" android:title="@string/auto_title" />
     <item android:id="@+id/itemRotate90" android:title="@string/rotate_90" android:icon="@android:drawable/ic_menu_rotate" />
     <item android:id="@+id/itemScreenOrientation" android:title="@string/screen_orientation" android:icon="@android:drawable/ic_menu_always_landscape_portrait" />
 	<item android:numericShortcut="1" android:alphabeticShortcut="c" android:id="@+id/itemSaveAsCopy" android:title="@string/save_as_copy" android:icon="@android:drawable/ic_menu_add"/>

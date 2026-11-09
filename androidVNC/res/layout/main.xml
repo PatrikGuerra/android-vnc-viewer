@@ -5,6 +5,11 @@
 	android:padding="10dip"
 	android:orientation="vertical"
 		>
+	<LinearLayout android:id="@+id/autoConnectStatus" android:visibility="gone"
+	    android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+	    <TextView android:id="@+id/autoConnectMessage" android:layout_width="0dip" android:layout_weight="1" android:layout_height="wrap_content" />
+	    <Button android:id="@+id/autoConnectCancel" android:text="@string/auto_cancel" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+	</LinearLayout>
 	<LinearLayout
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"

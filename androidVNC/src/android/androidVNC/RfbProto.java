@@ -230,6 +230,10 @@ class RfbProto {
   
   //-RfbProto(String h, int p, VncViewer v) throws IOException {
   RfbProto(String h, int p) throws IOException{
+    this(h, p, new Socket(h, p));
+  }
+
+  RfbProto(String h, int p, Socket connectedSocket) throws IOException {
   	//- viewer = v;
     host = h;
     port = p;
@@ -252,7 +256,7 @@ class RfbProto {
       }
     } */
     //+
-    sock = new Socket(host, port);
+    sock = connectedSocket;
     is = new DataInputStream(new BufferedInputStream(sock.getInputStream(),
 						     16384));
     os = sock.getOutputStream();
