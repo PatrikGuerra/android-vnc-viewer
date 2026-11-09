@@ -162,13 +162,16 @@ public class androidVNC extends Activity {
 	}
 
 	/* (non-Javadoc)
-	 * @see android.app.Activity#onMenuOpened(int, android.view.Menu)
+	 * @see android.app.Activity#onPrepareOptionsMenu(android.view.Menu)
 	 */
 	@Override
-	public boolean onMenuOpened(int featureId, Menu menu) {
-		menu.findItem(R.id.itemDeleteConnection).setEnabled(selected!=null && ! selected.isNew());
-		menu.findItem(R.id.itemSaveAsCopy).setEnabled(selected!=null && ! selected.isNew());
-		return true;
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		boolean savedConnection = selected != null && !selected.isNew();
+		MenuItem delete = menu.findItem(R.id.itemDeleteConnection);
+		MenuItem copy = menu.findItem(R.id.itemSaveAsCopy);
+		if (delete != null) delete.setEnabled(savedConnection);
+		if (copy != null) copy.setEnabled(savedConnection);
+		return super.onPrepareOptionsMenu(menu);
 	}
 
 	/* (non-Javadoc)
