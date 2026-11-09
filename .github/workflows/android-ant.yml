@@ -24,36 +24,45 @@ concurrency:
 jobs:
   build:
     name: Build debug APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    env:
+      LEGACY_ANDROID_HOME: ${{ runner.temp }}/android-legacy
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java 17 for Android SDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install Ant and unzip
         run: sudo apt-get install -y ant unzip
 
-      - name: Install Android API 17
-        run: sdkmanager --install "platforms;android-17"
+      - name: Install isolated legacy SDK
+        run: |
+          mkdir -p "$LEGACY_ANDROID_HOME"
+          (yes || true) | sdkmanager --sdk_root="$LEGACY_ANDROID_HOME" --licenses >/dev/null
+          sdkmanager --sdk_root="$LEGACY_ANDROID_HOME" --install \
+            "platforms;android-20" "build-tools;28.0.3" "platform-tools"
 
       - name: Install legacy Android SDK tools
         run: |
           curl --fail --location --retry 3 \
             https://dl.google.com/android/repository/tools_r25.2.5-linux.zip \
             --output /tmp/android-tools.zip
-          unzip -q /tmp/android-tools.zip -d "$ANDROID_HOME"
-          test -f "$ANDROID_HOME/tools/lib/ant-tasks.jar"
+          unzip -q /tmp/android-tools.zip -d "$LEGACY_ANDROID_HOME"
+          test -f "$LEGACY_ANDROID_HOME/tools/lib/ant-tasks.jar"
+          test -f "$LEGACY_ANDROID_HOME/build-tools/28.0.3/lib/dx.jar"
 
       - name: Set up Java 8 for Ant build
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '8'
@@ -82,17 +91,27 @@ jobs:
               if "=" in line and not line.lstrip().startswith("#")
               for key, value in [line.split("=", 1)]
           }
-          if properties.get("target") != "android-17":
-              raise SystemExit("The project must compile against android-17")
+          if properties.get("target") != "android-20":
+              raise SystemExit("Compile SDK 20 is required for the guarded API 19 UI implementation")
 
-          print(f"Compatibility OK: minSdk={min_sdk}, targetSdk={target_sdk}, compileSdk=17")
+          library_properties = Path("../ZoomerWithKeys/project.properties").read_text()
+          if "target=android-20" not in library_properties.splitlines():
+              raise SystemExit("ZoomerWithKeys must also compile against android-20")
+
+          print(f"Manifest/SDK configuration OK: minSdk={min_sdk}, targetSdk={target_sdk}, compileSdk=20")
           PY
+
+      - name: Test rotation mapping
+        run: |
+          mkdir -p /tmp/rotation-tests
+          javac -d /tmp/rotation-tests \
+            androidVNC/src/android/androidVNC/RotationCycle.java tests/RotationCycleTest.java
+          java -cp /tmp/rotation-tests android.androidVNC.RotationCycleTest
 
       - name: Build debug APK
         working-directory: androidVNC
         run: |
-          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
-          ant clean debug
+          ant -Dsdk.dir="$LEGACY_ANDROID_HOME" clean debug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

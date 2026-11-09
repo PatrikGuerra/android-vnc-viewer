@@ -78,8 +78,6 @@ final class ScreenOrientation {
      */
     static void rotate90(Activity activity) {
         int current = getMode(activity);
-        int nextIndex = 0;
-
         if (current == MODE_AUTO) {
             int orientation = activity.getResources().getConfiguration().orientation;
             Display display = ((WindowManager) activity.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
@@ -90,25 +88,14 @@ final class ScreenOrientation {
                 rotation = display.getOrientation();
             }
 
-            if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                if (rotation == Surface.ROTATION_180) {
-                    nextIndex = 3; // Reverse Portrait
-                } else {
-                    nextIndex = 1; // Portrait
-                }
-            } else {
-                if (rotation == Surface.ROTATION_180) {
-                    nextIndex = 0; // Landscape
-                } else {
-                    nextIndex = 2; // Reverse Landscape
-                }
-            }
-        } else {
-            for (int i = 0; i < ROTATE_CYCLE.length; i++) {
-                if (ROTATE_CYCLE[i] == current) {
-                    nextIndex = (i + 1) % ROTATE_CYCLE.length;
-                    break;
-                }
+            current = ROTATE_CYCLE[RotationCycle.currentIndex(rotation,
+                    orientation == Configuration.ORIENTATION_LANDSCAPE)];
+        }
+        int nextIndex = 0;
+        for (int i = 0; i < ROTATE_CYCLE.length; i++) {
+            if (ROTATE_CYCLE[i] == current) {
+                nextIndex = (i + 1) % ROTATE_CYCLE.length;
+                break;
             }
         }
 
