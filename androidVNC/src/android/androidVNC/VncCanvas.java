@@ -742,6 +742,8 @@ public class VncCanvas extends ImageView {
 
 	private Runnable reDraw = new Runnable() {
 		public void run() {
+			// A layout/rotation can request a redraw before the connection is ready.
+			if (bitmapData == null) return;
 			if (showDesktopInfo) {
 				// Show a Toast with the desktop info on first frame draw.
 				showDesktopInfo = false;
@@ -766,6 +768,7 @@ public class VncCanvas extends ImageView {
 	}
 
 	public void showConnectionInfo() {
+		if (rfb == null || bitmapData == null || rfb.desktopName == null) return;
 		String msg = rfb.desktopName;
 		int idx = rfb.desktopName.indexOf("(");
 		if (idx > -1) {
