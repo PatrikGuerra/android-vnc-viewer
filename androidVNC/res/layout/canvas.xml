@@ -12,6 +12,17 @@
     android:layout_gravity="bottom|center"
     >
 </android.androidVNC.VncCanvas>
+
+<Button
+    android:id="@+id/buttonScreenOrientation"
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="top|right"
+    android:layout_margin="6dip"
+    android:text="@string/screen_orientation_short"
+    android:contentDescription="@string/screen_orientation"
+/>
   
 <com.antlersoft.android.zoomer.ZoomControls
     android:layout_width="wrap_content"

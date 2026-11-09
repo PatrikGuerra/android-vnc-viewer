@@ -648,6 +648,9 @@ public class VncCanvasActivity extends Activity {
 
 		vncCanvas = (VncCanvas) findViewById(R.id.vnc_canvas);
 		zoomer = (ZoomControls) findViewById(R.id.zoomer);
+		findViewById(R.id.buttonScreenOrientation).setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) { ScreenOrientation.showChooser(VncCanvasActivity.this); }
+		});
 
 		vncCanvas.initializeVncCanvas(connection, new Runnable() {
 			public void run() {
@@ -907,9 +910,6 @@ public class VncCanvasActivity extends Activity {
 			if (automaticEvents != null) automaticEvents.send(AutoConnectContract.CANCELLED, new Bundle());
 			item.setVisible(false);
 			Toast.makeText(this, R.string.auto_stopped, Toast.LENGTH_SHORT).show();
-			return true;
-		case R.id.itemRotate90:
-			ScreenOrientation.rotate90(this);
 			return true;
 		case R.id.itemScreenOrientation:
 			ScreenOrientation.showChooser(this);

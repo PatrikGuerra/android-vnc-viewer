@@ -123,15 +123,13 @@ jobs:
           print(f"Manifest/SDK configuration OK: minSdk={min_sdk}, targetSdk={target_sdk}, compileSdk=20")
           PY
 
-      - name: Test rotation and automatic connection controllers
+      - name: Test automatic connection controller and transport
         run: |
           mkdir -p /tmp/rotation-tests
           javac -d /tmp/rotation-tests \
-            androidVNC/src/android/androidVNC/RotationCycle.java tests/RotationCycleTest.java \
             androidVNC/src/android/androidVNC/AutoConnectController.java \
             androidVNC/src/android/androidVNC/AutoConnectContract.java tests/AutoConnectControllerTest.java \
             androidVNC/src/android/androidVNC/ConnectionTransport.java tests/ConnectionTransportTest.java
-          java -cp /tmp/rotation-tests android.androidVNC.RotationCycleTest
           java -cp /tmp/rotation-tests android.androidVNC.AutoConnectControllerTest
           java -cp /tmp/rotation-tests android.androidVNC.ConnectionTransportTest
 

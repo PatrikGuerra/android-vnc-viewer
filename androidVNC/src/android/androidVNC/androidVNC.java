@@ -257,9 +257,6 @@ public class androidVNC extends Activity {
 		case R.id.itemOpenDoc :
 			Utils.showDocumentation(this);
 			break;
-		case R.id.itemRotate90 :
-			ScreenOrientation.rotate90(this);
-			break;
 		case R.id.itemScreenOrientation :
 			ScreenOrientation.showChooser(this);
 			break;
@@ -503,7 +500,6 @@ public class androidVNC extends Activity {
 		spinnerConnection.setSelection(connectionIndex,false);
 		selected=connections.get(connectionIndex);
 		updateViewFromSelected();
-		if (!AutoConnectSettings.enabled(this)) IntroTextDialog.showIntroTextIfNecessary(this, database);
 	}
 	
 	protected void onStop() {

@@ -18,7 +18,6 @@ As releases deste fork preservam pacote e certificado, permitindo atualizações
 
 | Recurso | Comportamento |
 | --- | --- |
-| **Girar 90°** | Alterna entre horizontal, vertical e suas posições invertidas, inclusive durante uma sessão. |
 | **Orientação da tela** | Oferece automática pelo sensor, horizontal, horizontal invertida, vertical e vertical invertida. |
 | Preferência persistente | Mantém a orientação ao abrir novamente o aplicativo e ao entrar na sessão. |
 | Rotação com sessão ativa | Ajusta a visualização sem recriar a atividade ou reconectar ao servidor. |
@@ -26,7 +25,9 @@ As releases deste fork preservam pacote e certificado, permitindo atualizações
 | Ajustes de toque e desenho | Converte as coordenadas conforme a escala e recalcula o desenho após mudar o tamanho da tela. |
 | **Conectar ao abrir** | Usa um perfil salvo, repete falhas e quedas no intervalo escolhido e permite cancelar até a próxima abertura. |
 
-**Girar 90°** e **Orientação da tela** aparecem no menu da configuração e da sessão. Abra-o pelo botão Menu do aparelho ou pelo menu da interface. Na sessão, a escala fica em **Scaling**.
+**Orientação da tela** aparece no menu da configuração e da sessão. Durante uma conexão, o botão **Orientação**, no canto superior direito, abre diretamente o mesmo seletor, sem depender do botão Menu do aparelho. A escolha é aplicada à sessão ativa e permanece salva. Na sessão, a escala fica em **Scaling**.
+
+A tela de boas-vindas não é exibida ao abrir o app. A antiga opção **Girar 90°** foi retirada; as posições de tela são escolhidas no seletor de orientação.
 
 Continuam disponíveis os modos originais **Fit to Screen** (mantém proporções), **1:1** e **Zoomable**. Perfis de conexão, escolha de cores, modos de entrada, teclas especiais e importação/exportação também vêm do projeto original; não foram introduzidos neste fork.
 
@@ -52,7 +53,6 @@ A abertura automática por um script externo do tablet também pode acionar esse
 - Proteção contra redesenho e exibição de informações antes de o framebuffer e o formato de cor estarem prontos.
 - Tratamento de conexão recusada sem acessar dados ainda não inicializados.
 - Desenho correto no modo de preenchimento, incluindo transformação dos limites dos drawables.
-- Mapeamento das quatro rotações considerando a orientação natural do painel.
 - Preservação das classes do banco em builds limpos e recuperação da compilação legada no GitHub Actions.
 
 ## Especificações do APK
@@ -111,13 +111,13 @@ Testes de versionamento e publicação simulada:
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-O teste Java de rotação também roda no CI e cobre painéis cuja posição natural é horizontal ou vertical.
+Os testes Java do controlador automático e do transporte também rodam no CI, incluindo intervalo, cancelamento, respostas atrasadas, timeout e fechamento de socket.
 
 ## Validação e limitações
 
 No NT-1710/Android 4.2.2 foram verificados abertura, menu, orientação vertical, giro durante sessão sem reconexão, imagem RAW de um servidor de teste local, preenchimento e coordenadas de toque. Isso não comprova compatibilidade com todos os servidores, autenticações ou versões antigas do Android. O modo proporcional ainda requer conferência visual final no aparelho.
 
-O controlador de conexão automática tem testes automatizados de seleção, intervalo, reconexão, cancelamento e resultados atrasados. O ciclo completo de Conectar ao abrir ainda precisa de validação no aparelho; esses testes não são apresentados como teste físico no NT-1710.
+O controlador de conexão automática tem testes automatizados de seleção, intervalo, reconexão, cancelamento e resultados atrasados. No aparelho também foram verificados abertura automática da conexão, repetição após queda, suspensão em segundo plano e cancelamento sem novas tentativas após mais de um intervalo.
 
 A resolução física e o hardware limitam nitidez e desempenho. O preenchimento pode deformar a imagem. Girar o cliente não muda automaticamente a orientação ou resolução do computador remoto. Prefira uma rede local confiável ou acesso por rede privada para esse cliente legado.
 
