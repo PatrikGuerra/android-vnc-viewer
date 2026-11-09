@@ -61,7 +61,7 @@ class LargeBitmapData extends AbstractBitmapData {
 		 * @see android.graphics.drawable.DrawableContainer#draw(android.graphics.Canvas)
 		 */
 		@Override
-		public void draw(Canvas canvas) {
+		protected void drawFrame(Canvas canvas) {
 			//android.util.Log.i("LBM", "Drawing "+xoffset+" "+yoffset);
 			int xoff, yoff;
 			synchronized ( LargeBitmapData.this )

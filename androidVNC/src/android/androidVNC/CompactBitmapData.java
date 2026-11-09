@@ -26,7 +26,7 @@ class CompactBitmapData extends AbstractBitmapData {
 		 * @see android.graphics.drawable.DrawableContainer#draw(android.graphics.Canvas)
 		 */
 		@Override
-		public void draw(Canvas canvas) {
+		protected void drawFrame(Canvas canvas) {
 			draw(canvas, 0, 0);
 		}
 	}

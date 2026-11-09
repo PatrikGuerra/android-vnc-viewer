@@ -13,7 +13,7 @@ import android.graphics.drawable.DrawableContainer;
  * @author Michael A. MacDonald
  *
  */
-public class AbstractBitmapDrawable extends DrawableContainer {
+public abstract class AbstractBitmapDrawable extends DrawableContainer {
 	Rect cursorRect;
 	Rect clipRect;
 	
@@ -37,6 +37,27 @@ public class AbstractBitmapDrawable extends DrawableContainer {
 		cursorRect = new Rect();
 		clipRect = new Rect();
 	}
+
+	@Override
+	public final void draw(Canvas canvas) {
+		int checkpoint = canvas.save();
+		try {
+			// FIT_XY changes drawable bounds instead of applying an ImageView matrix.
+			// Our framebuffer drawing uses remote pixels, so apply that transform here.
+			if (data.vncCanvas.getScaleType() == android.widget.ImageView.ScaleType.FIT_XY
+					&& data.framebufferwidth > 0 && data.framebufferheight > 0) {
+				Rect bounds = getBounds();
+				canvas.translate(bounds.left, bounds.top);
+				canvas.scale((float) bounds.width() / data.framebufferwidth,
+						(float) bounds.height() / data.framebufferheight);
+			}
+			drawFrame(canvas);
+		} finally {
+			canvas.restoreToCount(checkpoint);
+		}
+	}
+
+	protected abstract void drawFrame(Canvas canvas);
 	
 	void draw(Canvas canvas, int xoff, int yoff)
 	{
