@@ -168,11 +168,12 @@ public class VncCanvas extends ImageView {
 			}
 		});
 		final Display display = pd.getWindow().getWindowManager().getDefaultDisplay();
+		final int maxDim = Math.max(display.getWidth(), display.getHeight());
 		Thread t = new Thread() {
 			public void run() {
 				try {
 					connectAndAuthenticate(connection.getUserName(),connection.getPassword());
-					doProtocolInitialisation(display.getWidth(), display.getHeight());
+					doProtocolInitialisation(maxDim, maxDim);
 					handler.post(new Runnable() {
 						public void run() {
 							pd.setMessage("Downloading first frame.\nPlease wait...");
@@ -486,9 +487,42 @@ public class VncCanvas extends ImageView {
 		// Adjust coordinates for Android notification bar.
 		e.offsetLocation(0, -1f * getTop());
 
-		e.setLocation(absoluteXPosition + e.getX() / scale, absoluteYPosition + e.getY() / scale);
+		if (getScaleType() == ScaleType.FIT_XY && bitmapData != null && bitmapData.framebufferwidth > 0 && bitmapData.framebufferheight > 0 && getWidth() > 0 && getHeight() > 0) {
+			float fx = e.getX() * (float) bitmapData.framebufferwidth / (float) getWidth();
+			float fy = e.getY() * (float) bitmapData.framebufferheight / (float) getHeight();
+			if (fx < 0) fx = 0;
+			if (fx >= bitmapData.framebufferwidth) fx = bitmapData.framebufferwidth - 1;
+			if (fy < 0) fy = 0;
+			if (fy >= bitmapData.framebufferheight) fy = bitmapData.framebufferheight - 1;
+			e.setLocation(fx, fy);
+		} else if (getScaleType() == ScaleType.FIT_CENTER && bitmapData != null && bitmapData.framebufferwidth > 0 && bitmapData.framebufferheight > 0) {
+			float drawnWidth = bitmapData.framebufferwidth * scale;
+			float drawnHeight = bitmapData.framebufferheight * scale;
+			float xOffset = ((float) getWidth() - drawnWidth) / 2.0f;
+			float yOffset = ((float) getHeight() - drawnHeight) / 2.0f;
+			float fx = (e.getX() - xOffset) / scale;
+			float fy = (e.getY() - yOffset) / scale;
+			if (fx < 0) fx = 0;
+			if (fx >= bitmapData.framebufferwidth) fx = bitmapData.framebufferwidth - 1;
+			if (fy < 0) fy = 0;
+			if (fy >= bitmapData.framebufferheight) fy = bitmapData.framebufferheight - 1;
+			e.setLocation(fx, fy);
+		} else {
+			e.setLocation(absoluteXPosition + e.getX() / scale, absoluteYPosition + e.getY() / scale);
+		}
 		
 		return e;
+	}
+
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		super.onSizeChanged(w, h, oldw, oldh);
+		if (w > 0 && h > 0 && (w != oldw || h != oldh)) {
+			if (scaling != null && getContext() instanceof VncCanvasActivity) {
+				scaling.onConfigurationChanged((VncCanvasActivity) getContext());
+			}
+			reDraw();
+		}
 	}
 
 	public void onDestroy() {
@@ -1005,6 +1039,13 @@ public class VncCanvas extends ImageView {
 	{
 		if (scaling == null)
 			return 1;
+		if (getScaleType() == ScaleType.FIT_CENTER) {
+			if (bitmapData == null || getWidth() <= 0 || getHeight() <= 0 || bitmapData.framebufferwidth <= 0 || bitmapData.framebufferheight <= 0)
+				return 1;
+			float scaleX = (float) getWidth() / (float) bitmapData.framebufferwidth;
+			float scaleY = (float) getHeight() / (float) bitmapData.framebufferheight;
+			return Math.min(scaleX, scaleY);
+		}
 		return scaling.getScale();
 	}
 	

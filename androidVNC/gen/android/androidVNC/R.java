@@ -70,6 +70,7 @@ public final class R {
         public static final int itemDisconnect=0x7f06004c;
         public static final int itemDontShowAgain=0x7f06003d;
         public static final int itemEnterText=0x7f060043;
+        public static final int itemFitToFill=0x7f06005e;
         public static final int itemFitToScreen=0x7f060054;
         public static final int itemFollowMouse=0x7f06004d;
         public static final int itemFollowPan=0x7f06004e;
@@ -84,8 +85,10 @@ public final class R {
         public static final int itemInputTouchpad=0x7f060046;
         public static final int itemOneToOne=0x7f060053;
         public static final int itemOpenDoc=0x7f06003c;
+        public static final int itemRotate90=0x7f06005c;
         public static final int itemSaveAsCopy=0x7f06003a;
         public static final int itemScaling=0x7f060050;
+        public static final int itemScreenOrientation=0x7f06005d;
         public static final int itemSendKeyAgain=0x7f060057;
         public static final int itemSpecialKeys=0x7f060041;
         public static final int itemZoomable=0x7f060052;
@@ -224,7 +227,13 @@ public final class R {
         public static final int special_keys=0x7f04004c;
         public static final int use_immersive_check=0x7f04004d;
         public static final int use_wake_lock_check=0x7f04004e;
+        public static final int fit_to_fill=0x7f040053;
+        public static final int rotate_90=0x7f040051;
+        public static final int screen_orientation=0x7f040052;
         public static final int username_caption=0x7f04004f;
         public static final int username_hint=0x7f040050;
+    }
+    public static final class array {
+        public static final int screen_orientation_modes=0x7f070000;
     }
 }

@@ -52,4 +52,12 @@ class OneToOneScaling extends AbstractScaling {
 		activity.vncCanvas.pan(0,0);
 	}
 
+	@Override
+	void onConfigurationChanged(VncCanvasActivity activity) {
+		if (activity.vncCanvas == null || activity.vncCanvas.bitmapData == null)
+			return;
+		activity.vncCanvas.scrollToAbsolute();
+		activity.vncCanvas.pan(0, 0);
+	}
+
 }

@@ -519,6 +519,7 @@ public class VncCanvasActivity extends Activity {
 	public void onCreate(Bundle icicle) {
 
 		super.onCreate(icicle);
+		ScreenOrientation.apply(this);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -708,8 +709,24 @@ public class VncCanvasActivity extends Activity {
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
-		// ignore orientation/keyboard change
+		// Keep this Activity and its live VNC connection during rotation.
 		super.onConfigurationChanged(newConfig);
+		if (vncCanvas != null) {
+			vncCanvas.post(new Runnable() {
+				@Override
+				public void run() {
+					if (vncCanvas != null && vncCanvas.scaling != null) {
+						vncCanvas.scaling.onConfigurationChanged(VncCanvasActivity.this);
+					}
+				}
+			});
+		}
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		ScreenOrientation.apply(this);
 	}
 	
 	@Override
@@ -839,6 +856,12 @@ public class VncCanvasActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		vncCanvas.afterMenu = true;
 		switch (item.getItemId()) {
+		case R.id.itemRotate90:
+			ScreenOrientation.rotate90(this);
+			return true;
+		case R.id.itemScreenOrientation:
+			ScreenOrientation.showChooser(this);
+			return true;
 		case R.id.itemInfo:
 			vncCanvas.showConnectionInfo();
 			return true;
@@ -852,6 +875,7 @@ public class VncCanvasActivity extends Activity {
 		case R.id.itemZoomable:
 		case R.id.itemOneToOne:
 		case R.id.itemFitToScreen:
+		case R.id.itemFitToFill:
 			AbstractScaling.getById(item.getItemId()).setScaleTypeForActivity(
 					this);
 			item.setChecked(true);
@@ -1391,7 +1415,11 @@ public class VncCanvasActivity extends Activity {
 		 */
 		@Override
 		public boolean onTouchEvent(MotionEvent evt) {
-			return false;
+			vncCanvas.changeTouchCoordinatesToFullFrame(evt);
+			boolean isDown = (evt.getAction() == MotionEvent.ACTION_DOWN || evt.getAction() == MotionEvent.ACTION_MOVE);
+			if (vncCanvas.processPointerEvent(evt, isDown))
+				return true;
+			return VncCanvasActivity.super.onTouchEvent(evt);
 		}
 
 		/*

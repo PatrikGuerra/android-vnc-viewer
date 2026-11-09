@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_orientation">Screen orientation</string>
+    <string name="rotate_90">Rotate 90°</string>
+    <string name="fit_to_fill">Shrink to fill (fill screen)</string>
+    <string-array name="screen_orientation_modes">
+        <item>Automatic (sensor)</item>
+        <item>Landscape (horizontal)</item>
+        <item>Reverse Landscape (180°)</item>
+        <item>Portrait (vertical)</item>
+        <item>Reverse Portrait (180°)</item>
+    </string-array>
+</resources>

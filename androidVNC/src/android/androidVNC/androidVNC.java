@@ -66,6 +66,7 @@ public class androidVNC extends Activity {
 	public void onCreate(Bundle icicle) {
 
 		super.onCreate(icicle);
+		ScreenOrientation.apply(this);
 		setContentView(R.layout.main);
 
 		ipText = (EditText) findViewById(R.id.textIP);
@@ -199,6 +200,12 @@ public class androidVNC extends Activity {
 		case R.id.itemOpenDoc :
 			Utils.showDocumentation(this);
 			break;
+		case R.id.itemRotate90 :
+			ScreenOrientation.rotate90(this);
+			break;
+		case R.id.itemScreenOrientation :
+			ScreenOrientation.showChooser(this);
+			break;
 		}
 		return true;
 	}
@@ -285,6 +292,12 @@ public class androidVNC extends Activity {
 	protected void onStart() {
 		super.onStart();
 		arriveOnPage();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		ScreenOrientation.apply(this);
 	}
 	
 	/**

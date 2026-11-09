@@ -11,7 +11,7 @@ import android.widget.ImageView;
  * A scaling mode for the VncCanvas; based on ImageView.ScaleType
  */
 abstract class AbstractScaling {
-	private static final int scaleModeIds[] = { R.id.itemFitToScreen, R.id.itemOneToOne, R.id.itemZoomable };
+	private static final int scaleModeIds[] = { R.id.itemFitToScreen, R.id.itemFitToFill, R.id.itemOneToOne, R.id.itemZoomable };
 	
 	private static AbstractScaling[] scalings;
 
@@ -31,6 +31,9 @@ abstract class AbstractScaling {
 					{
 					case R.id.itemFitToScreen :
 						scalings[i]=new FitToScreenScaling();
+						break;
+					case R.id.itemFitToFill :
+						scalings[i]=new FitToFillScaling();
 						break;
 					case R.id.itemOneToOne :
 						scalings[i]=new OneToOneScaling();
@@ -123,5 +126,14 @@ abstract class AbstractScaling {
 	void adjust(VncCanvasActivity activity, float scaleFactor, float fx, float fy)
 	{
 	
+	}
+
+	/**
+	 * Callback when canvas configuration or view size changes (e.g. device rotation).
+	 * Subclasses should update offsets, matrix, and re-clamp scroll positions.
+	 * @param activity Activity containing the canvas
+	 */
+	void onConfigurationChanged(VncCanvasActivity activity)
+	{
 	}
 }

@@ -40,7 +40,7 @@ class FullBufferBitmapData extends AbstractBitmapData {
 		 */
 		@Override
 		public void draw(Canvas canvas) {
-			if (vncCanvas.getScaleType() == ImageView.ScaleType.FIT_CENTER)
+			if (vncCanvas.getScaleType() == ImageView.ScaleType.FIT_CENTER || vncCanvas.getScaleType() == ImageView.ScaleType.FIT_XY)
 			{
 				canvas.drawBitmap(data.bitmapPixels, 0, data.framebufferwidth, xoffset, yoffset, framebufferwidth, framebufferheight, false, null);				
 			}

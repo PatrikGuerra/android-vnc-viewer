@@ -52,4 +52,13 @@ class FitToScreenScaling extends AbstractScaling {
 		activity.vncCanvas.scrollTo(0, 0);
 	}
 
+	@Override
+	void onConfigurationChanged(VncCanvasActivity activity) {
+		if (activity.vncCanvas == null || activity.vncCanvas.bitmapData == null)
+			return;
+		activity.vncCanvas.absoluteXPosition = activity.vncCanvas.absoluteYPosition = 0;
+		activity.vncCanvas.scrollTo(0, 0);
+		activity.vncCanvas.invalidate();
+	}
+
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_orientation">Orientação da tela</string>
+    <string name="rotate_90">Girar 90°</string>
+    <string name="fit_to_fill">Preencher tela toda (sem bordas)</string>
+    <string-array name="screen_orientation_modes">
+        <item>Automática (sensor)</item>
+        <item>Horizontal (paisagem)</item>
+        <item>Horizontal invertida (180°)</item>
+        <item>Vertical (retrato)</item>
+        <item>Vertical invertida (180°)</item>
+    </string-array>
+</resources>

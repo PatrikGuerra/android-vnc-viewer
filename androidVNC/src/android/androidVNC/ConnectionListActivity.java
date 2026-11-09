@@ -41,6 +41,7 @@ public class ConnectionListActivity extends ListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+        ScreenOrientation.apply(this);
         
         database = new VncDatabase(this);
 

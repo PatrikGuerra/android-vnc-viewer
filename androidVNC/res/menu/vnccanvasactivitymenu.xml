@@ -1,4 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/itemRotate90" android:title="@string/rotate_90" android:icon="@android:drawable/ic_menu_rotate" />
+    <item android:id="@+id/itemScreenOrientation" android:title="@string/screen_orientation" android:icon="@android:drawable/ic_menu_always_landscape_portrait" />
 	<item android:numericShortcut="1" android:alphabeticShortcut="s" android:id="@+id/itemSpecialKeys" android:title="@string/special_keys" android:icon="@android:drawable/ic_dialog_dialer"/>
     <item android:numericShortcut="2" android:alphabeticShortcut="m" android:id="@+id/itemCenterMouse" android:title="@string/center_mouse" android:icon="@android:drawable/ic_menu_mylocation"/>
     <item android:id="@+id/itemEnterText" android:alphabeticShortcut="e" android:title="@string/enter_text" android:icon="@android:drawable/ic_menu_edit" />
@@ -27,6 +29,7 @@
 	    		<item android:id="@+id/itemZoomable" android:title="@string/scaling_zoomable" />
 	    		<item android:id="@+id/itemOneToOne" android:title="@string/one_to_one"/>
 	    		<item android:id="@+id/itemFitToScreen" android:title="@string/fit_to_screen" android:checked="true"/>
+	            <item android:id="@+id/itemFitToFill" android:title="@string/fit_to_fill"/>
 	    	</group>
     	</menu>
     </item>
