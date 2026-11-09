@@ -2,12 +2,15 @@
 <resources>
     <string name="screen_orientation">Screen orientation</string>
     <string name="screen_orientation_short">Orientation</string>
-    <string name="fit_to_fill">Shrink to fill (fill screen)</string>
+    <string name="fit_to_fill">Stretch — stretch to screen</string>
     <string-array name="screen_orientation_modes">
         <item>Automatic (sensor)</item>
         <item>Landscape (horizontal)</item>
-        <item>Reverse Landscape (180°)</item>
+        <item>Reverse Landscape (180Â°)</item>
         <item>Portrait (vertical)</item>
-        <item>Reverse Portrait (180°)</item>
+        <item>Reverse Portrait (180Â°)</item>
     </string-array>
+<string name="scale_fill">Fill — fill and crop</string>
+<string name="scale_chooser">Screen scale</string>
+<string name="scale_short">Scale</string>
 </resources>

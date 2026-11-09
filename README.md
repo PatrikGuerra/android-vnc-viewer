@@ -21,7 +21,7 @@ As releases deste fork preservam pacote e certificado, permitindo atualizações
 | **Orientação da tela** | Oferece automática pelo sensor, horizontal, horizontal invertida, vertical e vertical invertida. |
 | Preferência persistente | Mantém a orientação ao abrir novamente o aplicativo e ao entrar na sessão. |
 | Rotação com sessão ativa | Ajusta a visualização sem recriar a atividade ou reconectar ao servidor. |
-| **Preencher tela toda (sem bordas)** | Estica a imagem para ocupar a área disponível; pode alterar suas proporções. |
+| **Proporção durante a sessão** | Botão ao lado de Orientação: 1:1, Fit, Fill, Stretch e zoom manual. Aplica imediatamente e salva automaticamente no perfil da conexão. |
 | Ajustes de toque e desenho | Converte as coordenadas conforme a escala e recalcula o desenho após mudar o tamanho da tela. |
 | **Conectar ao abrir** | Usa um perfil salvo, repete falhas e quedas no intervalo escolhido e permite cancelar até a próxima abertura. |
 
@@ -29,7 +29,7 @@ As releases deste fork preservam pacote e certificado, permitindo atualizações
 
 A tela de boas-vindas não é exibida ao abrir o app. A antiga opção **Girar 90°** foi retirada; as posições de tela são escolhidas no seletor de orientação.
 
-Continuam disponíveis os modos originais **Fit to Screen** (mantém proporções), **1:1** e **Zoomable**. Perfis de conexão, escolha de cores, modos de entrada, teclas especiais e importação/exportação também vêm do projeto original; não foram introduzidos neste fork.
+**1:1** mantém os pixels originais e permite navegar; **Fit** mostra a imagem inteira, preservando a proporção e deixando bordas quando necessário; **Fill** preserva a proporção e recorta o excedente para ocupar a tela; **Stretch** estica cada eixo para ocupar toda a tela. **Zoomable** permite zoom manual. Não há uma opção Center separada, pois centralizar é um posicionamento, não outra escala. As escolhas são salvas por conexão (CENTER, FIT_CENTER, CENTER_CROP, FIT_XY e MATRIX, respectivamente), inclusive ao selecionar pelo menu antigo. Perfis antigos FIT_XY continuam com o mesmo comportamento, agora chamado Stretch. Perfis de conexão, escolha de cores, modos de entrada, teclas especiais e importação/exportação também vêm do projeto original; não foram introduzidos neste fork.
 
 ## Conectar ao abrir
 

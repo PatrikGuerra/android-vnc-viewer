@@ -27,7 +27,7 @@
 <string name="export_settings_path">Export to file</string>
 <string name="enter_text_title">Enter Text to Send</string>
 <string name="enter_text">Send text</string>
-<string name="fit_to_screen">Fit to Screen</string>
+<string name="fit_to_screen">Fit — show entire desktop</string>
 <string name="force_full_check">Force full-screen bitmap</string>
 <string name="import_export_settings">Import/Export Settings</string>
 <string name="import_settings">Import</string>
@@ -55,7 +55,7 @@
 <string name="nickname_caption">Nickname</string>
 <string name="off">Off</string>
 <string name="on">On</string>
-<string name="one_to_one">1:1</string>
+<string name="one_to_one">1:1 — original size</string>
 <string name="open_doc">Manual/Wiki</string>
 <string name="pan_follow_mouse">Pan Follows Mouse</string>
 <string name="password_caption">Password</string>

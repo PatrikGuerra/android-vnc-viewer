@@ -648,7 +648,10 @@ public class VncCanvasActivity extends Activity {
 
 		vncCanvas = (VncCanvas) findViewById(R.id.vnc_canvas);
 		zoomer = (ZoomControls) findViewById(R.id.zoomer);
-		findViewById(R.id.buttonScreenOrientation).setOnClickListener(new View.OnClickListener() {
+		findViewById(R.id.buttonScreenScale).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) { showScaleChooser(); }
+        });
+        findViewById(R.id.buttonScreenOrientation).setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) { ScreenOrientation.showChooser(VncCanvasActivity.this); }
 		});
 
@@ -927,7 +930,8 @@ public class VncCanvasActivity extends Activity {
 		case R.id.itemZoomable:
 		case R.id.itemOneToOne:
 		case R.id.itemFitToScreen:
-		case R.id.itemFitToFill:
+		case R.id.itemFill:
+        case R.id.itemFitToFill:
 			AbstractScaling.getById(item.getItemId()).setScaleTypeForActivity(
 					this);
 			item.setChecked(true);
@@ -1425,6 +1429,25 @@ public class VncCanvasActivity extends Activity {
 	}
 
 	static final String FIT_SCREEN_NAME = "FIT_SCREEN";
+    private void showScaleChooser() {
+        if (vncCanvas == null || vncCanvas.scaling == null) return;
+        final int[] ids = { R.id.itemOneToOne, R.id.itemFitToScreen, R.id.itemFill,
+                R.id.itemFitToFill, R.id.itemZoomable };
+        String[] labels = { getString(R.string.one_to_one), getString(R.string.fit_to_screen),
+                getString(R.string.scale_fill), getString(R.string.fit_to_fill), getString(R.string.scaling_zoomable) };
+        int selected = 0;
+        for (int i = 0; i < ids.length; i++) if (vncCanvas.scaling.getId() == ids[i]) selected = i;
+        new android.app.AlertDialog.Builder(this).setTitle(R.string.scale_chooser)
+                .setSingleChoiceItems(labels, selected, new android.content.DialogInterface.OnClickListener() {
+                    public void onClick(android.content.DialogInterface dialog, int which) {
+                        AbstractScaling.getById(ids[which]).setScaleTypeForActivity(VncCanvasActivity.this);
+                        vncCanvas.invalidate();
+                        showPanningState();
+                        dialog.dismiss();
+                    }
+                }).setNegativeButton(android.R.string.cancel, null).show();
+    }
+
 	/** Internal name for default input mode with Zoom scaling */
 	static final String TOUCH_ZOOM_MODE = "TOUCH_ZOOM_MODE";
 	

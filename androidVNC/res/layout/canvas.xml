@@ -13,6 +13,11 @@
     >
 </android.androidVNC.VncCanvas>
 
+<LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+ android:layout_gravity="top|right" android:orientation="horizontal">
+<Button android:id="@+id/buttonScreenScale" style="?android:attr/buttonStyleSmall"
+ android:layout_width="wrap_content" android:layout_height="wrap_content"
+ android:text="@string/scale_short" android:contentDescription="@string/scale_chooser"/>
 <Button
     android:id="@+id/buttonScreenOrientation"
     style="?android:attr/buttonStyleSmall"
@@ -23,6 +28,7 @@
     android:text="@string/screen_orientation_short"
     android:contentDescription="@string/screen_orientation"
 />
+</LinearLayout>
   
 <com.antlersoft.android.zoomer.ZoomControls
     android:layout_width="wrap_content"

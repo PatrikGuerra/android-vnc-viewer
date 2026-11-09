@@ -561,7 +561,7 @@ public class VncCanvas extends ImageView {
 			if (fy < 0) fy = 0;
 			if (fy >= bitmapData.framebufferheight) fy = bitmapData.framebufferheight - 1;
 			e.setLocation(fx, fy);
-		} else if (getScaleType() == ScaleType.FIT_CENTER && bitmapData != null && bitmapData.framebufferwidth > 0 && bitmapData.framebufferheight > 0) {
+		} else if ((getScaleType() == ScaleType.FIT_CENTER || getScaleType() == ScaleType.CENTER_CROP) && bitmapData != null && bitmapData.framebufferwidth > 0 && bitmapData.framebufferheight > 0) {
 			float drawnWidth = bitmapData.framebufferwidth * scale;
 			float drawnHeight = bitmapData.framebufferheight * scale;
 			float xOffset = ((float) getWidth() - drawnWidth) / 2.0f;
@@ -1122,12 +1122,12 @@ public class VncCanvas extends ImageView {
 	{
 		if (scaling == null)
 			return 1;
-		if (getScaleType() == ScaleType.FIT_CENTER) {
+		if (getScaleType() == ScaleType.FIT_CENTER || getScaleType() == ScaleType.CENTER_CROP) {
 			if (bitmapData == null || getWidth() <= 0 || getHeight() <= 0 || bitmapData.framebufferwidth <= 0 || bitmapData.framebufferheight <= 0)
 				return 1;
 			float scaleX = (float) getWidth() / (float) bitmapData.framebufferwidth;
 			float scaleY = (float) getHeight() / (float) bitmapData.framebufferheight;
-			return Math.min(scaleX, scaleY);
+			return getScaleType() == ScaleType.CENTER_CROP ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
 		}
 		return scaling.getScale();
 	}
