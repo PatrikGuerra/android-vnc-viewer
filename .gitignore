@@ -2,4 +2,6 @@ bin/
 gen/
 local.properties
 *.keystore
+__pycache__/
+dist/
 R.java.d
