@@ -29,11 +29,11 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Set up Java 8
+      - name: Set up Java 17 for Android SDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '8'
+          java-version: '17'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -51,6 +51,42 @@ jobs:
             --output /tmp/android-tools.zip
           unzip -q /tmp/android-tools.zip -d "$ANDROID_HOME"
           test -f "$ANDROID_HOME/tools/lib/ant-tasks.jar"
+
+      - name: Set up Java 8 for Ant build
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Verify Android 4.2.2 compatibility
+        working-directory: androidVNC
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          android = "{http://schemas.android.com/apk/res/android}"
+          manifest = ElementTree.parse("AndroidManifest.xml").getroot()
+          uses_sdk = manifest.find("uses-sdk")
+          if uses_sdk is None:
+              raise SystemExit("AndroidManifest.xml must declare uses-sdk")
+
+          min_sdk = int(uses_sdk.get(android + "minSdkVersion", "1"))
+          target_sdk = int(uses_sdk.get(android + "targetSdkVersion", str(min_sdk)))
+          if min_sdk > 17 or target_sdk > 17:
+              raise SystemExit("Android 4.2.2 compatibility requires minSdkVersion and targetSdkVersion <= 17")
+
+          properties = {
+              key.strip(): value.strip()
+              for line in Path("project.properties").read_text(encoding="utf-8").splitlines()
+              if "=" in line and not line.lstrip().startswith("#")
+              for key, value in [line.split("=", 1)]
+          }
+          if properties.get("target") != "android-17":
+              raise SystemExit("The project must compile against android-17")
+
+          print(f"Compatibility OK: minSdk={min_sdk}, targetSdk={target_sdk}, compileSdk=17")
+          PY
 
       - name: Build debug APK
         working-directory: androidVNC
