@@ -6,9 +6,9 @@
     <string-array name="screen_orientation_modes">
         <item>Automatic (sensor)</item>
         <item>Landscape (horizontal)</item>
-        <item>Reverse Landscape (180Â°)</item>
+        <item>Reverse Landscape (180°)</item>
         <item>Portrait (vertical)</item>
-        <item>Reverse Portrait (180Â°)</item>
+        <item>Reverse Portrait (180°)</item>
     </string-array>
 <string name="scale_fill">Fill — fill and crop</string>
 <string name="scale_chooser">Screen scale</string>

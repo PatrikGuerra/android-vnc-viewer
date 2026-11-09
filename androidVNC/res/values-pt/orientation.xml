@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="screen_orientation">OrientaÃ§Ã£o da tela</string>
-    <string name="screen_orientation_short">OrientaÃ§Ã£o</string>
+    <string name="screen_orientation">Orientação da tela</string>
+    <string name="screen_orientation_short">Orientação</string>
     <string name="fit_to_fill">Stretch — esticar para a tela</string>
     <string-array name="screen_orientation_modes">
-        <item>AutomÃ¡tica (sensor)</item>
+        <item>Automática (sensor)</item>
         <item>Horizontal (paisagem)</item>
-        <item>Horizontal invertida (180Â°)</item>
+        <item>Horizontal invertida (180°)</item>
         <item>Vertical (retrato)</item>
-        <item>Vertical invertida (180Â°)</item>
+        <item>Vertical invertida (180°)</item>
     </string-array>
 <string name="scale_fill">Fill — preencher e cortar</string>
 <string name="scale_chooser">Proporção da tela</string>
