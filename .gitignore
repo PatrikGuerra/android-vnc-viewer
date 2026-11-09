@@ -1,2 +1,5 @@
 bin/
+gen/
+local.properties
+*.keystore
 R.java.d
